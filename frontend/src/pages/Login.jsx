@@ -23,11 +23,15 @@ const Login = () => {
 
   const handleForm = async (e) => {
     e.preventDefault();
+    console.log('click login');
+    
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}auth/login`,
         form,
-        { withCredentials: true }
+        { 
+           headers: { "Content-Type": "application/json" },
+          withCredentials: true }
       );
       setStatus(response?.data?.message || "Login successful");
       console.log(response?.data);
