@@ -6,7 +6,7 @@ let onlineUsers = {}; // { userId: socketId }
 export const initSocket = (server) => {
     const io = new Server(server, {
         cors: {
-            origin: ["http://localhost:5173","http://localhost:5174"],
+            origin: ["http://localhost:5173","http://localhost:5174" ,"https://chat-app-ai-self.vercel.app/"],
         }
     });
 
