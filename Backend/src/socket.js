@@ -29,7 +29,7 @@ export const initSocket = (server) => {
         }
 
         const newMsg = {
-            id: result.insertId,   // ✅ return DB id
+            id: result.insertId,   
             sender_id,
             receiver_id,
             message,
