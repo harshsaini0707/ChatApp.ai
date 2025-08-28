@@ -40,64 +40,68 @@ export const aiChat = async (req, res) => {
   try {
     const { id } = req.user;
     const { text } = req.body;
-    let history = "";
 
-    const query1 = "SELECT message, ai_response FROM aiChat WHERE user_id = ? ";
-    connection.query(query1, [id], async (err, results) => {
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: "Prompt required!" });
+    }
+
+  
+    const query = "SELECT message, ai_response FROM aiChat WHERE user_id = ? ORDER BY created_at ASC";
+    connection.query(query, [id], async (err, rows) => {
       if (err) {
+        console.error("DB Fetch Error:", err);
         return res.status(500).json({ message: "Database fetching Error!!" });
       }
 
+      let history = rows
+        .map(r => `User: ${r.message}\nAI: ${r.ai_response}`)
+        .join("\n");
 
-      if (results.length > 0) {
-        history = results
-          .map(
-            (row) => `User: ${row.message}\nAI: ${row.ai_response}`
-          )
-          .join("\n");
-      }
+      
+     let prompt = `
+You are a friendly chatbot who acts like a supportive friend. 
 
-      if (!text || !text.trim()) {
-        return res.status(404).json({ message: "Prompt Required!!" });
-      }
+# Rules for Behavior:
+- If the user asks you to act like a specific character (e.g. Dora, Elon Musk, SpongeBob, etc.), 
+  you must **stay fully in that character** throughout the conversation.
+- Always use fun styles like bullet points (*, -, #) and emojis 🎉😄✨ to make replies lively.
+- Keep answers natural, conversational, and context-aware.
+- If someone asks "how are you built?" or similar, always reply: "I am built by Harsh Saini." 👨‍💻
+- Use the past conversation for context, and continue from where it left off.
 
-      let prompt = `
-        you are a friendly chatbot that acts as a friend of user and helps them in queries. 
-        If user asks to act or chat like a certain character you must act like that character. 
-        Otherwise act like a normal friend. 
-        Don't just give answer in plain text — ,* , => , $ , # , & , !  use bullet points and also cool emojis. 
-        Context:\n${history || "No history, treat as new chat."}
-      `;
+# Conversation so far:
+${history}
 
-      try {
-        const ai_response = genAI.getGenerativeModel({
-          model: "gemini-1.5-flash",
+# Now continue the chat
+User: ${text}
+AI:
+`;
+
+
+      const ai_response = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await ai_response.generateContent(prompt);
+      const reply = result.response.text();
+
+     
+      const insert = "INSERT INTO aiChat (user_id, message, ai_response) VALUES (?, ?, ?)";
+      connection.query(insert, [id, text, reply], (err) => {
+        if (err) {
+          console.error("DB Insert Error:", err);
+          return res.status(500).json({ message: "Database Error!" });
+        }
+
+        return res.status(200).json({
+          message: "Chat saved successfully!!",
+          data: { id, message: text, ai_response: reply }
         });
-        const result = await ai_response.generateContent(prompt);
-        const reply = result.response.text();
-
-       
-        const query2 =
-          "INSERT INTO aiChat (user_id, message, ai_response) VALUES (?, ?, ?)";
-        connection.query(query2, [id, text, reply], (err) => {
-          if (err) {
-            console.error("DB Insert Error:", err);
-            return res.status(500).json({ message: "Database Error!" });
-          }
-
-          return res.status(200).json({
-            message: "Chat saved successfully!!",
-            data: { id, message: text, ai_response: reply },
-          });
-        });
-      } catch (error) {
-        return res.status(500).json({ message: "AI Generation Error!!" });
-      }
+      });
     });
   } catch (error) {
+    console.error("AI Chat Error:", error);
     return res.status(500).json({ message: "Internal Server Error!!" });
   }
 };
+
 
 
 export const aiChatHistory = async(req,res)=>{

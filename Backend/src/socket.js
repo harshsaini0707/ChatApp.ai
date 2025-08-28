@@ -6,7 +6,7 @@ let onlineUsers = {}; // { userId: socketId }
 export const initSocket = (server) => {
     const io = new Server(server, {
         cors: {
-            origin: ["http://localhost:5173", "https://chat-app-mj9inp6il-harsh-sainis-projects.vercel.app","http://localhost:5174" ,"https://chat-app-ai-self.vercel.app"],
+            origin: ["http://localhost:5173", "https://chat-app-mj9inp6il-harsh-sainis-projects.vercel.app","http://localhost:5174" ,'http://localhost:5175' ,"https://chat-app-ai-self.vercel.app"],
         }
     });
 
@@ -16,6 +16,11 @@ export const initSocket = (server) => {
         socket.on("join", (userId) => {
             onlineUsers[userId] = socket.id;
             io.emit("online_users", Object.keys(onlineUsers));
+        });
+
+         socket.on("join_room", (chatId) => {
+            socket.join(chatId);
+            console.log(`User ${socket.id} joined room ${chatId}`);
         });
 
    socket.on("private_message", ({ sender_id, receiver_id, message }) => {
@@ -36,12 +41,12 @@ export const initSocket = (server) => {
             created_at: new Date()
         };
 
-        // ✅ Emit to receiver if online
+        
         if (onlineUsers[receiver_id]) {
             io.to(onlineUsers[receiver_id]).emit("receive_message", newMsg);
         }
 
-        // ✅ Also emit back to sender (so both see same DB message)
+       
         if (onlineUsers[sender_id]) {
             io.to(onlineUsers[sender_id]).emit("receive_message", newMsg);
         }

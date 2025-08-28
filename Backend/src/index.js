@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
     origin:["http://localhost:5173","http://localhost:5174" ,"https://chat-app-ai-self.vercel.app",
-        "https://chat-app-mj9inp6il-harsh-sainis-projects.vercel.app"
+        "https://chat-app-mj9inp6il-harsh-sainis-projects.vercel.app",'http://localhost:5175'
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     credentials:true
