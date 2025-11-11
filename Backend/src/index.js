@@ -29,7 +29,8 @@ initTables();
 app.use("/auth" , authRouter);
 app.use("/messages", meesageRouter);
 
-
+app.use("/" , ()=>console.log("okay");
+)
 
 server.listen(PORT,()=>{
     console.log('Server Started!!');  
